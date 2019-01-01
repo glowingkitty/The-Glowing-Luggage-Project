@@ -89,7 +89,7 @@ class LEDStrip():
 
             time.sleep(0.1)
 
-    def save_wifis(self):
+    def save_wifis(self, repeat=True):
         import network
 
         networks = []
@@ -98,7 +98,15 @@ class LEDStrip():
         wlan = network.WLAN(network.STA_IF)  # create station interface
         wlan.active(True)       # activate the interface
 
-        while True:
+        if repeat:
+            while True:
+                wifis = wlan.scan()
+                for network in wifis:
+                    if network[0] not in network_names:
+                        networks.append(network)
+                        network_names.append(network[0])
+                        print(network[0])
+        else:
             wifis = wlan.scan()
             for network in wifis:
                 if network[0] not in network_names:
@@ -111,6 +119,10 @@ class LEDStrip():
             self.bottom[i] = black
             self.right[i] = black
             self.left[i] = black
+
+        self.right.write()
+        self.left.write()
+        self.bottom.write()
 
     def rainbow_animation(self, brightness=None, up_and_down=False):
         if not brightness:
@@ -138,7 +150,7 @@ class LEDStrip():
 
     def police_animation(self, brightness=None):
         if not brightness:
-            brightness = self.brightness
+            brightness = 1
 
         LEDs_last = None
 
@@ -173,24 +185,22 @@ class LEDStrip():
 
         # create array of leds with decreasing brightness
         led_arrow = [color]
-        steps = 1
-        while steps < 5:
-            led_arrow.append((
-                round(led_arrow[-1][0]*reduce_factor),
-                round(led_arrow[-1][1]*reduce_factor),
-                round(led_arrow[-1][2]*reduce_factor)
+        while len(led_arrow) <= 5:
+            led_arrow.insert(0, (
+                round(led_arrow[0][0]*reduce_factor),
+                round(led_arrow[0][1]*reduce_factor),
+                round(led_arrow[0][2]*reduce_factor)
             ))
-            steps += 1
 
         # move array of leds over led strips
-        position = len(led_arrow)-1
+        position = self.stripSize-1
         while True:
             original_position = position
 
             # leds of led_arrow
             processed_leds = 0
-            while processed_leds < len(led_arrow) and position < len(led_arrow):
-                if position == 0:
+            while processed_leds < len(led_arrow) and position >= 0:
+                if position == -1:
                     position = len(led_arrow)
                 self.right[position] = led_arrow[processed_leds]
                 self.left[position] = led_arrow[processed_leds]
@@ -205,15 +215,19 @@ class LEDStrip():
                     self.right[i] = black
                     self.left[i] = black
 
+            # make sure bottom LEDs are dark
+            for i in range(self.stripSize):
+                self.bottom[i] = black
+
             self.right.write()
             self.left.write()
+            self.bottom.write()
 
             time.sleep(1.0/36.0)
             position -= 1
 
-        # also scan and save wifis - playing around with what one can do with the ESP
-        if scan_wifis == True:
-            self.save_wifis()
+            if position == -1:
+                position = self.stripSize-1
 
     def test_leds(self):
         for i in range(self.stripSize):
@@ -236,8 +250,8 @@ class LEDStrip():
         print()
 
 
-LEDStrip().rainbow_animation(up_and_down=True)
+# LEDStrip().rainbow_animation(up_and_down=True)
 # LEDStrip().police_animation()
 # LEDStrip().light_off()
-# LEDStrip().arrows_forward()
+LEDStrip().arrows_forward()
 # LEDStrip().test_leds()
