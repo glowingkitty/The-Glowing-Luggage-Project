@@ -4,22 +4,10 @@ import math
 import time
 
 stripSize = 30
-LEDsTop = NeoPixel(Pin(18, Pin.OUT), stripSize, bpp=3)
-LEDsBottom = NeoPixel(Pin(17, Pin.OUT), stripSize, bpp=3)
+LEDsBottom = NeoPixel(Pin(5, Pin.OUT), stripSize, bpp=3)
+LEDsRight = NeoPixel(Pin(18, Pin.OUT), stripSize, bpp=3)
+LEDsLeft = NeoPixel(Pin(17, Pin.OUT), stripSize, bpp=3)
 
-
-def smooth_colors(t, i):
-    offset = float(i) / 30.0 * math.pi
-
-    r = 0.5 + 0.5 * math.cos(2.0 * t + 2.0 + offset)
-    g = 0.5 + 0.5 * math.cos(2.0 * t + 3.0 + offset)
-    b = 0.5 + 0.5 * math.cos(2.0 * t + 4.0 + offset)
-
-    return (int(255.0 * r), int(255.0 * g), int(255.0 * b))
-
-
-# vec3 palette( in float t, in vec3 a, in vec3 b, in vec3 c, in vec3 d )
-#  return a + b*cos( 6.28318*(c*t+d) );
 
 def rainbow(t, i):
     a = (0.5, 0.5, 0.5)
@@ -44,11 +32,13 @@ def render():
         t += 0.06
         for i in range(stripSize):
             color = rainbow(t, i)
-            LEDsTop[i] = color
             LEDsBottom[i] = color
+            LEDsRight[i] = color
+            LEDsLeft[i] = color
 
         LEDsBottom.write()
-        LEDsTop.write()
+        LEDsRight.write()
+        LEDsLeft.write()
 
         time.sleep(1.0/36.0)
 
