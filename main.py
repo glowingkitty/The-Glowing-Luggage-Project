@@ -122,6 +122,7 @@ class LED():
         # move array of leds over led strips
         position = 0
         while True:
+            original_position = position
 
             # leds of led_arrow
             processed_leds = 0
@@ -132,10 +133,10 @@ class LED():
                 position -= 1
                 processed_leds += 1
 
-            position = processed_leds
+            position = original_position
 
             for i in range(self.stripSize):
-                if i >= position:
+                if i > position or i < position-len(self.led_arrow):
                     self.right[i] = black
                     self.left[i] = black
 
