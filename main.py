@@ -63,4 +63,4 @@ def rainbow_animation(brightness=0.3, up_and_down=False):
         time.sleep(1.0/36.0)
 
 
-rainbow_animation()
+rainbow_animation(up_and_down=True)
