@@ -3,8 +3,8 @@ from neopixel import NeoPixel
 import math
 import time
 
-red = (237, 29, 35)
-blue = (0, 31, 215)
+red = (228, 0, 7)
+blue = (0, 48, 228)
 black = (0, 0, 0)
 
 
@@ -31,22 +31,90 @@ def change_brightness(brightness, direction):
 
     if brightness <= 0.1:
         direction = 'up'
-    elif brightness >= 1:
+    elif brightness >= 0.7:
         direction = 'down'
 
     return brightness, direction
 
 
-class LED():
+class LEDStrip():
     def __init__(self, brightness=0.3):
         self.stripSize = 30
-        self.left = NeoPixel(Pin(17, Pin.OUT), stripSize, bpp=3)
-        self.right = NeoPixel(Pin(18, Pin.OUT), stripSize, bpp=3)
-        self.bottom = NeoPixel(Pin(5, Pin.OUT), stripSize, bpp=3)
+        self.left = NeoPixel(Pin(17, Pin.OUT), self.stripSize, bpp=3)
+        self.right = NeoPixel(Pin(18, Pin.OUT), self.stripSize, bpp=3)
+        self.bottom = NeoPixel(Pin(5, Pin.OUT), self.stripSize, bpp=3)
         self.brightness = brightness
         self.time = 0.0
 
-    def rainbow_animation(self, brightness=self.brightness, up_and_down=False):
+    def hall_sensor(self):
+        import esp32
+
+        value = 0
+        while True:
+            new_value = esp32.hall_sensor()
+            if new_value != value:
+                print(new_value)
+
+            value = new_value
+            time.sleep(0.1)
+
+    def raw_temperature(self):
+        import esp32
+
+        value = 0
+        while True:
+            new_value = esp32.raw_temperature()
+            if new_value != value:
+                print(new_value)
+
+            value = new_value
+            time.sleep(0.1)
+
+    def show_wifis(self):
+        import network
+
+        networks = []
+        network_names = []
+
+        wlan = network.WLAN(network.STA_IF)  # create station interface
+        wlan.active(True)       # activate the interface
+
+        while True:
+            wifis = wlan.scan()
+            for network in wifis:
+                if network[0] not in network_names:
+                    networks.append(network)
+                    network_names.append(network[0])
+                    print(network[0])
+
+            time.sleep(0.1)
+
+    def save_wifis(self):
+        import network
+
+        networks = []
+        network_names = []
+
+        wlan = network.WLAN(network.STA_IF)  # create station interface
+        wlan.active(True)       # activate the interface
+
+        while True:
+            wifis = wlan.scan()
+            for network in wifis:
+                if network[0] not in network_names:
+                    networks.append(network)
+                    network_names.append(network[0])
+                    print(network[0])
+
+    def light_off(self):
+        for i in range(self.stripSize):
+            self.bottom[i] = black
+            self.right[i] = black
+            self.left[i] = black
+
+    def rainbow_animation(self, brightness=None, up_and_down=False):
+        if not brightness:
+            brightness = self.brightness
         if up_and_down:
             brightness, direction = change_brightness(0.1, 'up')
 
@@ -68,65 +136,62 @@ class LED():
 
             time.sleep(1.0/36.0)
 
-    def police_animation(self, brightness=self.brightness, mode='switch'):
+    def police_animation(self, brightness=None):
+        if not brightness:
+            brightness = self.brightness
+
         LEDs_last = None
 
         while True:
-            if mode == 'switch':
-                # switching between red and blue
+            # red and blue on separate sides
+            if LEDs_last == 'red':
                 for i in range(self.stripSize):
-                    if LEDs_last == 'red,blue':
-                        self.right[i] = blue
-                        self.left[i] = red
-                        LEDs_last = 'blue,red'
-                    else:
-                        self.right[i] = red
-                        self.left[i] = blue
-                        LEDs_last = 'red,blue'
+                    self.right[i] = blue
+                    self.left[i] = black
+                LEDs_last = 'blue'
 
-            elif mode == 'separate':
-                # red and blue on separate sides
+            else:
                 for i in range(self.stripSize):
-                    if LEDs_last == 'red':
-                        self.right[i] = blue
-                        self.left[i] = black
-                        LEDs_last = 'blue'
-                    else:
-                        self.right[i] = black
-                        self.left[i] = red
-                        LEDs_last = 'red'
+                    self.right[i] = black
+                    self.left[i] = red
+                LEDs_last = 'red'
 
             self.right.write()
             self.left.write()
 
-            time.sleep(1.0/36.0)
+            time.sleep(0.5)
 
-    def arrows_forward(self, brightness=self.brightness, color='red'):
+    def arrows_forward(self, brightness=None, color='red', scan_wifis=True):
+        if not brightness:
+            brightness = self.brightness
+
         # get base color
         if color == 'red':
-            color = (237, 29, 35)
+            color = red
 
-        reduce_factor = 0.3
+        reduce_factor = 0.4
 
         # create array of leds with decreasing brightness
         led_arrow = [color]
         steps = 1
         while steps < 5:
             led_arrow.append((
-                color[0]*reduce_factor,
-                color[1]*reduce_factor,
-                color[2]*reduce_factor
+                round(led_arrow[-1][0]*reduce_factor),
+                round(led_arrow[-1][1]*reduce_factor),
+                round(led_arrow[-1][2]*reduce_factor)
             ))
             steps += 1
 
         # move array of leds over led strips
-        position = 0
+        position = len(led_arrow)-1
         while True:
             original_position = position
 
             # leds of led_arrow
             processed_leds = 0
-            while processed_leds < len(self.led_arrow) and position >= 0:
+            while processed_leds < len(led_arrow) and position < len(led_arrow):
+                if position == 0:
+                    position = len(led_arrow)
                 self.right[position] = led_arrow[processed_leds]
                 self.left[position] = led_arrow[processed_leds]
 
@@ -136,7 +201,7 @@ class LED():
             position = original_position
 
             for i in range(self.stripSize):
-                if i > position or i < position-len(self.led_arrow):
+                if i > position or i < position-len(led_arrow):
                     self.right[i] = black
                     self.left[i] = black
 
@@ -144,8 +209,35 @@ class LED():
             self.left.write()
 
             time.sleep(1.0/36.0)
-            position += 1
+            position -= 1
+
+        # also scan and save wifis - playing around with what one can do with the ESP
+        if scan_wifis == True:
+            self.save_wifis()
+
+    def test_leds(self):
+        for i in range(self.stripSize):
+            print('LED No. '+str(i))
+            for e in range(self.stripSize):
+                self.right[e] = black
+                self.left[e] = black
+                self.bottom[e] = black
+
+            self.bottom[i] = red
+            self.right[i] = red
+            self.left[i] = red
+
+            self.right.write()
+            self.left.write()
+            self.bottom.write()
+            time.sleep(0.5)
+
+    def music_animation(self):
+        print()
 
 
-LED().rainbow_animation(up_and_down=True)
-# LED().police_animation(mode='separate')
+LEDStrip().rainbow_animation(up_and_down=True)
+# LEDStrip().police_animation()
+# LEDStrip().light_off()
+# LEDStrip().arrows_forward()
+# LEDStrip().test_leds()
