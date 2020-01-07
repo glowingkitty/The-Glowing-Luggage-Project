@@ -173,10 +173,7 @@ class LEDStrip():
 
             time.sleep(0.5)
 
-    def arrows_forward(self, brightness=None, color='red', scan_wifis=True):
-        if not brightness:
-            brightness = self.brightness
-
+    def arrows_forward(self, color='red', scan_wifis=True):
         # get base color
         if color == 'red':
             color = red
@@ -215,15 +212,34 @@ class LEDStrip():
                     self.right[i] = black
                     self.left[i] = black
 
-            # make sure bottom LEDs are dark
-            for i in range(self.stripSize):
-                self.bottom[i] = black
+                # light up bottom LEDs as well
+                if position == 17:
+                    self.bottom[i] = (
+                        round(red[0]*0.3),
+                        round(red[1]*0.3),
+                        round(red[2]*0.3)
+                    )
+                elif position == 18:
+                    self.bottom[i] = (
+                        round(red[0]),
+                        round(red[1]),
+                        round(red[2])
+                    )
+                elif position == 19:
+                    self.bottom[i] = (
+                        round(red[0]*0.3),
+                        round(red[1]*0.3),
+                        round(red[2]*0.3)
+                    )
+                else:
+                    # or make sure bottom LEDs are dark
+                    self.bottom[i] = black
 
             self.right.write()
             self.left.write()
             self.bottom.write()
 
-            time.sleep(1.0/36.0)
+            time.sleep(1.0/30.0)
             position -= 1
 
             if position == -1:
