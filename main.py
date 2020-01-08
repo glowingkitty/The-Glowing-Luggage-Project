@@ -266,8 +266,8 @@ class LEDStrip():
         print()
 
 
-# LEDStrip().rainbow_animation(up_and_down=True)
+LEDStrip().rainbow_animation(up_and_down=True)
 # LEDStrip().police_animation()
 # LEDStrip().light_off()
-LEDStrip().arrows_forward()
+# LEDStrip().arrows_forward()
 # LEDStrip().test_leds()
