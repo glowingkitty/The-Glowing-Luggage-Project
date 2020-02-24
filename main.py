@@ -114,6 +114,22 @@ class LEDStrip():
                     network_names.append(network[0])
                     print(network[0])
 
+    @property
+    def button_pressed(self):
+        button = Pin(23, Pin.IN)
+        button_pressed=False
+        count_pressed=0
+
+        while button.value()==1:
+            if count_pressed>=5:
+                button_pressed=True
+
+            elif count_pressed<5:
+                count_pressed+=1
+        print(button_pressed)
+
+        return button_pressed
+
     def light_off(self):
         for i in range(self.stripSize):
             self.bottom[i] = black
@@ -266,8 +282,7 @@ class LEDStrip():
         print()
 
 
+
 LEDStrip().rainbow_animation(up_and_down=True)
 # LEDStrip().police_animation()
-# LEDStrip().light_off()
 # LEDStrip().arrows_forward()
-# LEDStrip().test_leds()
